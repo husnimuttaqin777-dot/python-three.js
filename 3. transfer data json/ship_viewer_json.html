@@ -8,7 +8,54 @@
        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+       <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+       <script>
+            let backendPython = null;
 
+            document.addEventListener("DOMContentLoaded", function () {
+            if (typeof qt !== 'undefined') {
+                new QWebChannel(qt.webChannelTransport, function (channel) {
+                    backendPython = channel.objects.backend;
+                    console.log("WebChannel terhubung ke Python!");
+
+                });
+            }
+        });
+            
+            function readAllData() {
+            if (!backendPython) {
+                console.log("Menunggu WebChannel siap...");
+                return;
+            }  
+
+            //console.log("its alive");
+            // 1. Baca position.csv → posisi & heading & z kapal
+            if (typeof backendPython.getPositionData === "function") {
+                backendPython.getPositionData(function (responseString) {
+                    //console.log("RAW:", responseString);
+                    try {
+                        const pos = JSON.parse(responseString);
+                        console.log(" x:", pos.x, "y:", pos.y, "z:", pos.z, "theta:", pos.theta);
+                        cube2.position.x = pos.x;
+                        cube2.position.y = pos.z;
+                        cube2.position.z = pos.y;
+                        if (pos.error || pos.status) return;
+
+                        
+
+                        
+                    } catch (err) {
+                        console.error("Gagal parse position.csv:", err);
+                    }
+                });
+            }
+
+            
+            }
+
+            setInterval(readAllData, 100);
+
+        </script>
        <script>
             var scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87CEEB);
@@ -77,10 +124,6 @@
             );
             scene.add(cube2);
 
-            cube2.position.x = 0;
-            cube2.position.y = 0;
-            cube2.position.z = 0;
-
 
             // Axes
             var axesHelper = new THREE.AxesHelper(10);
@@ -119,6 +162,8 @@
             });
                     
         </script>
+
+        
 
         <style>
             html, body {
