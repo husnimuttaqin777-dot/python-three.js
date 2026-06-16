@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motor Induksi 3 Fasa – Animasi</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0e1a;
+    font-family: 'Courier New', monospace;
+    color: #c8d8e8;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Top header ── */
+  #header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 24px;
+    background: linear-gradient(90deg, #0d1525 0%, #111e33 100%);
+    border-bottom: 1px solid #1e3a5f;
+    flex-shrink: 0;
+  }
+  #header h1 {
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #5b9bd5;
+    font-weight: 400;
+  }
+  #header .badge {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #3a6a9a;
+    border: 1px solid #1e3a5f;
+    padding: 3px 10px;
+    border-radius: 2px;
+  }
+
+  /* ── Main layout ── */
+  #main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Canvas ── */
+  #canvas-wrap {
+    flex: 1;
+    position: relative;
+  }
+  canvas { display: block; width: 100% !important; height: 100% !important; }
+
+  /* ── Right panel ── */
+  #panel {
+    width: 240px;
+    background: #0d1525;
+    border-left: 1px solid #1e3a5f;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow-y: auto;
+  }
+
+  .p-section {
+    border-bottom: 1px solid #142035;
+    padding: 14px 16px;
+  }
+  .p-section h2 {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: #3a6a9a;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* ── Seven Segment Display ── */
+  #seg-wrap {
+    background: #060c18;
+    border: 1px solid #0e2040;
+    border-radius: 4px;
+    padding: 12px 10px 8px;
+    text-align: center;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+  }
+  #seg-label {
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: #1a4a6a;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  #seg-digits {
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+    margin-bottom: 4px;
+  }
+  .seg-digit {
+    position: relative;
+    width: 28px;
+    height: 48px;
+  }
+  .seg-digit svg {
+    width: 100%;
+    height: 100%;
+  }
+  #seg-unit {
+    font-size: 8px;
+    color: #0f3a5a;
+    letter-spacing: 2px;
+  }
+
+  /* ── Gauge ── */
+  #gauge-wrap {
+    text-align: center;
+  }
+  #gauge-svg { width: 160px; height: 90px; }
+  #gauge-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #5bc8f5;
+    letter-spacing: 1px;
+    line-height: 1;
+    margin-top: -2px;
+  }
+  #gauge-unit-lbl {
+    font-size: 9px;
+    color: #2a5a7a;
+    letter-spacing: 2px;
+  }
+
+  /* ── Sliders ── */
+  .ctrl-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .ctrl-row label {
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: #4a7aa0;
+    text-transform: uppercase;
+    flex: 0 0 60px;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    flex: 1;
+    height: 3px;
+    background: #0e2040;
+    border-radius: 2px;
+    outline: none;
+    margin: 0 8px;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #5b9bd5;
+    cursor: pointer;
+    box-shadow: 0 0 6px #5b9bd5aa;
+  }
+  .ctrl-val {
+    font-size: 10px;
+    color: #7ab8e0;
+    min-width: 30px;
+    text-align: right;
+  }
+
+  /* ── Status indicators ── */
+  .status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .status-label { font-size: 9px; color: #2a5a7a; letter-spacing: 1px; text-transform: uppercase; }
+  .status-val   { font-size: 10px; color: #5bc8f5; }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    display: inline-block; margin-right: 6px;
+    box-shadow: 0 0 6px currentColor;
+  }
+  .dot.green { background: #00e676; color: #00e676; }
+  .dot.amber { background: #ffab00; color: #ffab00; }
+  .dot.red   { background: #ff5252; color: #ff5252; }
+
+  /* ── Buttons ── */
+  .btn-row {
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    flex: 1;
+    padding: 8px 0;
+    border: 1px solid #1e3a5f;
+    background: #060c18;
+    color: #5b9bd5;
+    font-family: 'Courier New', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all .15s;
+  }
+  .btn:hover { background: #0e2040; border-color: #5b9bd5; }
+  .btn.active { background: #0e2a50; border-color: #5bc8f5; color: #5bc8f5; box-shadow: 0 0 8px #5bc8f530; }
+
+  /* ── Phase indicators ── */
+  .phase-bars {
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+    height: 40px;
+  }
+  .phase-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .phase-bar-bg {
+    width: 100%;
+    height: 32px;
+    background: #060c18;
+    border: 1px solid #0e2040;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .phase-bar-fill {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    transition: height .1s;
+  }
+  .phase-bar-lbl { font-size: 8px; color: #2a5a7a; letter-spacing: 1px; }
+
+  #info-bar {
+    padding: 6px 24px;
+    background: #060c18;
+    border-top: 1px solid #0e2040;
+    font-size: 9px;
+    color: #1e4a6a;
+    letter-spacing: 2px;
+    flex-shrink: 0;
+    display: flex;
+    gap: 24px;
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>Motor Induksi 3 Fasa &nbsp;/&nbsp; Simulasi</h1>
+  <div class="badge">TIGA FASA · AC ASYNCRONOUS</div>
+</div>
+
+<div id="main">
+  <div id="canvas-wrap">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div id="panel">
+
+    <!-- SEVEN SEGMENT RPM -->
+    <div class="p-section">
+      <h2>Kecepatan Rotor</h2>
+      <div id="seg-wrap">
+        <div id="seg-label">RPM</div>
+        <div id="seg-digits">
+          <!-- 4 digits injected by JS -->
+        </div>
+        <div id="seg-unit">r / min</div>
+      </div>
+    </div>
+
+    <!-- GAUGE -->
+    <div class="p-section">
+      <h2>Indikator Beban</h2>
+      <div id="gauge-wrap">
+        <svg id="gauge-svg" viewBox="0 0 160 90">
+          <defs>
+            <linearGradient id="gGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%"   stop-color="#00e676"/>
+              <stop offset="60%"  stop-color="#ffab00"/>
+              <stop offset="100%" stop-color="#ff5252"/>
+            </linearGradient>
+          </defs>
+          <!-- Background arc -->
+          <path d="M10,80 A70,70 0 0,1 150,80" fill="none" stroke="#0e2040" stroke-width="10" stroke-linecap="round"/>
+          <!-- Color arc -->
+          <path id="gauge-arc" d="M10,80 A70,70 0 0,1 150,80" fill="none" stroke="url(#gGrad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="220" stroke-dashoffset="220"/>
+          <!-- Needle -->
+          <line id="gauge-needle" x1="80" y1="80" x2="80" y2="18" stroke="#5bc8f5" stroke-width="2" stroke-linecap="round"
+                transform="rotate(-90 80 80)"/>
+          <circle cx="80" cy="80" r="4" fill="#5bc8f5"/>
+          <!-- Tick marks -->
+          <g stroke="#1e3a5f" stroke-width="1">
+            <line x1="10" y1="80" x2="18" y2="80"/>
+            <line x1="150" y1="80" x2="142" y2="80"/>
+            <line x1="80" y1="10" x2="80" y2="18"/>
+          </g>
+          <text x="6"  y="78" fill="#1e3a5f" font-size="7">0</text>
+          <text x="146" y="78" fill="#1e3a5f" font-size="7">100</text>
+        </svg>
+        <div id="gauge-value">0</div>
+        <div id="gauge-unit-lbl">% BEBAN</div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="p-section">
+      <h2>Kontrol</h2>
+      <div class="ctrl-row">
+        <label>Frekuensi</label>
+        <input type="range" id="freq-sl" min="10" max="60" value="50" step="1">
+        <span class="ctrl-val" id="freq-val">50 Hz</span>
+      </div>
+      <div class="ctrl-row">
+        <label>Tegangan</label>
+        <input type="range" id="volt-sl" min="200" max="400" value="380" step="10">
+        <span class="ctrl-val" id="volt-val">380 V</span>
+      </div>
+      <div class="ctrl-row">
+        <label>Beban</label>
+        <input type="range" id="load-sl" min="0" max="100" value="30" step="1">
+        <span class="ctrl-val" id="load-val">30%</span>
+      </div>
+      <div class="btn-row" style="margin-top:4px">
+        <button class="btn active" id="btn-start">▶ START</button>
+        <button class="btn" id="btn-stop">■ STOP</button>
+      </div>
+    </div>
+
+    <!-- STATUS -->
+    <div class="p-section">
+      <h2>Status</h2>
+      <div class="status-row">
+        <span class="status-label"><span class="dot green" id="dot-run"></span>Running</span>
+        <span class="status-val" id="stat-run">ON</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Slip</span>
+        <span class="status-val" id="stat-slip">3.2 %</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Torsi</span>
+        <span class="status-val" id="stat-torque">48 Nm</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Arus</span>
+        <span class="status-val" id="stat-current">12.4 A</span>
+      </div>
+    </div>
+
+    <!-- PHASE BARS -->
+    <div class="p-section">
+      <h2>Fasa R / S / T</h2>
+      <div class="phase-bars">
+        <div class="phase-bar-wrap">
+          <div class="phase-bar-bg"><div class="phase-bar-fill" id="pb-r" style="background:#ff4444;"></div></div>
+          <div class="phase-bar-lbl">R</div>
+        </div>
+        <div class="phase-bar-wrap">
+          <div class="phase-bar-bg"><div class="phase-bar-fill" id="pb-s" style="background:#44aaff;"></div></div>
+          <div class="phase-bar-lbl">S</div>
+        </div>
+        <div class="phase-bar-wrap">
+          <div class="phase-bar-bg"><div class="phase-bar-fill" id="pb-t" style="background:#44ff88;"></div></div>
+          <div class="phase-bar-lbl">T</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- panel -->
+</div><!-- main -->
+
+<div id="info-bar">
+  <span>POLES: 4 &nbsp;|&nbsp; Pn: 7.5 kW &nbsp;|&nbsp; cosφ: 0.85 &nbsp;|&nbsp; η: 91%</span>
+  <span id="info-ns">Ns: 1500 rpm (sync)</span>
+</div>
+
+<!-- ─────────────── THREE.JS ─────────────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════
+   SEVEN-SEGMENT DIGIT RENDERER (SVG paths)
+═══════════════════════════════════════════ */
+const SEG_ON  = '#ff3800';
+const SEG_OFF = '#1a0800';
+// Segments: a(top) b(top-right) c(bot-right) d(bot) e(bot-left) f(top-left) g(mid)
+// Each digit: which segments are on
+const SEG_MAP = {
+  '0':[1,1,1,1,1,1,0],
+  '1':[0,1,1,0,0,0,0],
+  '2':[1,1,0,1,1,0,1],
+  '3':[1,1,1,1,0,0,1],
+  '4':[0,1,1,0,0,1,1],
+  '5':[1,0,1,1,0,1,1],
+  '6':[1,0,1,1,1,1,1],
+  '7':[1,1,1,0,0,0,0],
+  '8':[1,1,1,1,1,1,1],
+  '9':[1,1,1,1,0,1,1],
+  ' ':[0,0,0,0,0,0,0],
+};
+
+function makeDigitSVG() {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns,'svg');
+  svg.setAttribute('viewBox','0 0 20 34');
+  // segment paths: [d, segment-index]
+  const segs = [
+    ['M3,1 L4,2 L14,2 L15,1 L14,0 L4,0 Z', 0],          // a top
+    ['M15,2 L16,3 L16,14 L15,15 L14,14 L14,3 Z', 1],     // b top-right
+    ['M15,18 L16,19 L16,30 L15,31 L14,30 L14,19 Z', 2],  // c bot-right
+    ['M3,31 L4,32 L14,32 L15,31 L14,30 L4,30 Z', 3],     // d bottom
+    ['M3,18 L4,19 L4,30 L3,31 L2,30 L2,19 Z', 4],        // e bot-left
+    ['M3,2 L4,3 L4,14 L3,15 L2,14 L2,3 Z', 5],           // f top-left
+    ['M3,16 L4,15 L14,15 L15,16 L14,17 L4,17 Z', 6],     // g middle
+  ];
+  const paths = [];
+  for (const [d, idx] of segs) {
+    const p = document.createElementNS(ns,'path');
+    p.setAttribute('d', d);
+    p.setAttribute('fill', SEG_OFF);
+    svg.appendChild(p);
+    paths.push(p);
+  }
+  return {svg, paths};
+}
+
+function buildSegDisplay(n) {
+  const wrap = document.getElementById('seg-digits');
+  wrap.innerHTML = '';
+  const digits = [];
+  for (let i = 0; i < n; i++) {
+    const div = document.createElement('div');
+    div.className = 'seg-digit';
+    const {svg, paths} = makeDigitSVG();
+    div.appendChild(svg);
+    wrap.appendChild(div);
+    digits.push(paths);
+  }
+  return digits;
+}
+
+function updateSegDisplay(digits, value) {
+  const s = String(Math.floor(value)).padStart(digits.length, ' ');
+  for (let i = 0; i < digits.length; i++) {
+    const ch = s[i];
+    const map = SEG_MAP[ch] || SEG_MAP[' '];
+    for (let j = 0; j < 7; j++) {
+      digits[i][j].setAttribute('fill', map[j] ? SEG_ON : SEG_OFF);
+      if (map[j]) {
+        digits[i][j].style.filter = 'drop-shadow(0 0 2px '+SEG_ON+')';
+      } else {
+        digits[i][j].style.filter = '';
+      }
+    }
+  }
+}
+
+const segDigits = buildSegDisplay(4);
+
+/* ═══════════════════════════════════════════
+   THREE.JS MOTOR SCENE
+═══════════════════════════════════════════ */
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x060d1a);
+scene.fog = new THREE.Fog(0x060d1a, 12, 30);
+
+const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+camera.position.set(5.5, 3.5, 6.5);
+camera.lookAt(0, 0.3, 0);
+
+// ── Materials ──
+const mBlue = new THREE.MeshStandardMaterial({
+  color: 0x1a5fa8, roughness: 0.35, metalness: 0.7,
+});
+const mBlueDark = new THREE.MeshStandardMaterial({
+  color: 0x0d3a6e, roughness: 0.4, metalness: 0.65,
+});
+const mMetal = new THREE.MeshStandardMaterial({
+  color: 0x999999, roughness: 0.2, metalness: 0.9,
+});
+const mLabelMat = new THREE.MeshStandardMaterial({
+  color: 0xddddcc, roughness: 0.5, metalness: 0.0,
+});
+
+// Helper: create fin array on body
+function addFins(parent, count, radius, len) {
+  for (let i = 0; i < count; i++) {
+    const geo = new THREE.BoxGeometry(len, 0.06, 0.03);
+    const fin = new THREE.Mesh(geo, mBlueDark);
+    const a = (i / count) * Math.PI * 2;
+    fin.position.set(0, Math.sin(a)*radius, Math.cos(a)*radius);
+    fin.rotation.x = a;
+    parent.add(fin);
+  }
+}
+
+// ── Motor body (stator) ──
+const motorGroup = new THREE.Group();
+scene.add(motorGroup);
+
+// Main cylinder body
+const bodyGeo = new THREE.CylinderGeometry(0.82, 0.82, 2.6, 64);
+const body = new THREE.Mesh(bodyGeo, mBlue);
+body.rotation.z = Math.PI / 2;
+body.castShadow = true;
+motorGroup.add(body);
+
+// Fins around body
+for (let i = 0; i < 22; i++) {
+  const fGeo = new THREE.CylinderGeometry(0.93, 0.93, 0.07, 48);
+  const fin = new THREE.Mesh(fGeo, mBlueDark);
+  fin.rotation.z = Math.PI / 2;
+  fin.position.x = -1.2 + i * 0.12;
+  motorGroup.add(fin);
+}
+
+// End caps
+function endCap(x, jbox) {
+  const g = new THREE.Group();
+  const capGeo = new THREE.CylinderGeometry(0.82, 0.82, 0.22, 48);
+  const cap = new THREE.Mesh(capGeo, mBlue);
+  cap.rotation.z = Math.PI / 2;
+  g.add(cap);
+  // flange ring
+  const flangeGeo = new THREE.CylinderGeometry(0.95, 0.95, 0.08, 48);
+  const flange = new THREE.Mesh(flangeGeo, mBlueDark);
+  flange.rotation.z = Math.PI / 2;
+  g.add(flange);
+  // bolt holes
+  for (let i = 0; i < 6; i++) {
+    const ba = (i/6)*Math.PI*2;
+    const bGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.12, 8);
+    const bolt = new THREE.Mesh(bGeo, mMetal);
+    bolt.rotation.z = Math.PI/2;
+    bolt.position.set(0, Math.sin(ba)*0.78, Math.cos(ba)*0.78);
+    g.add(bolt);
+  }
+  g.position.x = x;
+  motorGroup.add(g);
+}
+endCap(-1.4, false);
+endCap( 1.4, false);
+
+// ── Drive-end end cap (larger, with bearing housing) ──
+const deGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.35, 48);
+const deHousing = new THREE.Mesh(deGeo, mBlueDark);
+deHousing.rotation.z = Math.PI / 2;
+deHousing.position.x = 1.62;
+motorGroup.add(deHousing);
+
+// ── Shaft ── (this rotates)
+const shaftGroup = new THREE.Group();
+motorGroup.add(shaftGroup);
+
+const shaftGeo = new THREE.CylinderGeometry(0.10, 0.10, 3.6, 24);
+const shaft = new THREE.Mesh(shaftGeo, mMetal);
+shaft.rotation.z = Math.PI / 2;
+shaftGroup.add(shaft);
+
+// Key slot on shaft
+const keyGeo = new THREE.BoxGeometry(0.8, 0.06, 0.12);
+const key = new THREE.Mesh(keyGeo, mMetal);
+key.position.set(2.0, 0.1, 0);
+shaftGroup.add(key);
+
+// ── Fan (on non-drive end) – also rotates ──
+const fanGroup = new THREE.Group();
+shaftGroup.add(fanGroup);
+fanGroup.position.x = -1.3;
+
+const fanHubGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.15, 24);
+const fanHub = new THREE.Mesh(fanHubGeo, mMetal);
+fanHub.rotation.z = Math.PI/2;
+fanGroup.add(fanHub);
+
+for (let i = 0; i < 8; i++) {
+  const a = (i/8)*Math.PI*2;
+  const bladeGeo = new THREE.BoxGeometry(0.14, 0.55, 0.04);
+  const blade = new THREE.Mesh(bladeGeo, mBlueDark);
+  blade.rotation.z = Math.PI/2;
+  blade.position.set(0, Math.sin(a)*0.48, Math.cos(a)*0.48);
+  blade.rotation.x = a + 0.3;
+  fanGroup.add(blade);
+}
+
+// ── Fan cover (NDE cover) ──
+const coverGeo = new THREE.CylinderGeometry(0.94, 0.82, 0.55, 48, 1, true);
+const cover = new THREE.Mesh(coverGeo, mBlueDark);
+cover.rotation.z = Math.PI/2;
+cover.position.x = -1.68;
+motorGroup.add(cover);
+
+// Cover end plate with vents
+const coverCapGeo = new THREE.CylinderGeometry(0.82, 0.82, 0.06, 48);
+const coverCap = new THREE.Mesh(coverCapGeo, mBlue);
+coverCap.rotation.z = Math.PI/2;
+coverCap.position.x = -1.94;
+motorGroup.add(coverCap);
+
+// Vent holes on cover
+for (let i = 0; i < 16; i++) {
+  const a = (i/16)*Math.PI*2;
+  const ventGeo = new THREE.CylinderGeometry(0.055, 0.055, 0.1, 8);
+  const vent = new THREE.Mesh(ventGeo, new THREE.MeshStandardMaterial({color:0x010408, roughness:1, metalness:0}));
+  vent.rotation.x = Math.PI/2;
+  vent.position.set(-1.94, Math.sin(a)*0.55, Math.cos(a)*0.55);
+  motorGroup.add(vent);
+}
+
+// ── Junction box (top) ──
+const jboxGeo = new THREE.BoxGeometry(0.85, 0.42, 0.7);
+const jbox = new THREE.Mesh(jboxGeo, mBlue);
+jbox.position.set(-0.2, 1.13, 0);
+motorGroup.add(jbox);
+
+const jlidGeo = new THREE.BoxGeometry(0.88, 0.06, 0.73);
+const jlid = new THREE.Mesh(jlidGeo, mBlueDark);
+jlid.position.set(-0.2, 1.35, 0);
+motorGroup.add(jlid);
+
+// conduit on junction box
+const conduitGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.35, 12);
+const conduit = new THREE.Mesh(conduitGeo, mMetal);
+conduit.rotation.z = Math.PI/2;
+conduit.position.set(-0.2, 0.95, 0.33);
+motorGroup.add(conduit);
+
+// ── Nameplate (label) ──
+const plateGeo = new THREE.BoxGeometry(1.2, 0.45, 0.01);
+const plate = new THREE.Mesh(plateGeo, mLabelMat);
+plate.position.set(0, -0.3, 0.835);
+motorGroup.add(plate);
+
+// ── Mounting feet ──
+function addFoot(x) {
+  const footGeo = new THREE.BoxGeometry(0.55, 0.15, 1.2);
+  const foot = new THREE.Mesh(footGeo, mBlueDark);
+  foot.position.set(x, -1.0, 0);
+  foot.castShadow = true;
+  motorGroup.add(foot);
+  // foot bolt holes
+  for (const z of [-0.45, 0.45]) {
+    const bGeo = new THREE.CylinderGeometry(0.055, 0.055, 0.2, 8);
+    const b = new THREE.Mesh(bGeo, mMetal);
+    b.position.set(x, -1.09, z);
+    motorGroup.add(b);
+  }
+}
+addFoot(-0.9);
+addFoot( 0.9);
+
+// ── Ground (reflective floor) ──
+const floorGeo = new THREE.PlaneGeometry(30, 30);
+const floorMat = new THREE.MeshStandardMaterial({color:0x050b18, roughness:0.9, metalness:0.1});
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI/2;
+floor.position.y = -1.12;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// ── Lighting ──
+scene.add(new THREE.AmbientLight(0x1a2a40, 2.5));
+
+const keyLight = new THREE.DirectionalLight(0x8ab8e0, 3);
+keyLight.position.set(5, 8, 6);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.set(2048,2048);
+scene.add(keyLight);
+
+const fillLight = new THREE.DirectionalLight(0x3060a0, 1.2);
+fillLight.position.set(-4, 2, -3);
+scene.add(fillLight);
+
+const rimLight = new THREE.DirectionalLight(0x2050a0, 1.8);
+rimLight.position.set(-3, 4, -5);
+scene.add(rimLight);
+
+const underLight = new THREE.PointLight(0x001830, 1.5, 8);
+underLight.position.set(0, -2, 0);
+scene.add(underLight);
+
+// ── Subtle magnetic field lines (particle system) ──
+const fieldPts = [];
+for (let i = 0; i < 300; i++) {
+  const a = Math.random()*Math.PI*2;
+  const r = 1.1 + Math.random()*0.7;
+  const x = (Math.random()-0.5)*3;
+  fieldPts.push(x, Math.sin(a)*r, Math.cos(a)*r);
+}
+const fieldGeo = new THREE.BufferGeometry();
+fieldGeo.setAttribute('position', new THREE.Float32BufferAttribute(fieldPts, 3));
+const fieldMat = new THREE.PointsMaterial({color:0x2255aa, size:0.025, transparent:true, opacity:0.45});
+const fieldParticles = new THREE.Points(fieldGeo, fieldMat);
+motorGroup.add(fieldParticles);
+
+// ── Camera orbit (subtle auto-rotate) ──
+let camAngle = 0.55;
+let camElevation = 0.52;
+const CAM_DIST = 9;
+
+// ── Responsive resize ──
+function resize() {
+  const wrap = document.getElementById('canvas-wrap');
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+}
+resize();
+new ResizeObserver(resize).observe(document.getElementById('canvas-wrap'));
+
+// ═══════════════════════════════════════════
+//  Motor Physics State
+// ═══════════════════════════════════════════
+let running    = true;
+let freq       = 50;    // Hz
+let load       = 30;    // %
+let voltage    = 380;   // V
+let rpm        = 0;
+let targetRpm  = 0;
+let shaftAngle = 0;
+let phaseT     = 0;
+
+function syncRpm() {
+  const poles = 4;
+  const nsync = (120 * freq) / poles;
+  // slip increases with load
+  const slipFactor = 0.005 + (load/100)*0.045;
+  targetRpm = running ? nsync * (1 - slipFactor) : 0;
+  // update status
+  document.getElementById('info-ns').textContent = `Ns: ${Math.round(nsync)} rpm (sync)`;
+  document.getElementById('stat-slip').textContent = (slipFactor*100).toFixed(1)+' %';
+  const torque = running ? (load/100)*96 : 0;
+  document.getElementById('stat-torque').textContent = torque.toFixed(0)+' Nm';
+  const current = running ? 4.2 + (load/100)*18 : 0;
+  document.getElementById('stat-current').textContent = current.toFixed(1)+' A';
+}
+syncRpm();
+
+// ═══════════════════════════════════════════
+//  Gauge update
+// ═══════════════════════════════════════════
+function updateGauge(pct) {
+  const arc = document.getElementById('gauge-arc');
+  const total = 220;
+  arc.setAttribute('stroke-dashoffset', total - (total * pct/100));
+  const needle = document.getElementById('gauge-needle');
+  const deg = -90 + (pct/100)*180;
+  needle.setAttribute('transform', `rotate(${deg} 80 80)`);
+  document.getElementById('gauge-value').textContent = Math.round(pct);
+}
+
+// ═══════════════════════════════════════════
+//  Controls wiring
+// ═══════════════════════════════════════════
+document.getElementById('freq-sl').addEventListener('input', e => {
+  freq = +e.target.value;
+  document.getElementById('freq-val').textContent = freq+' Hz';
+  syncRpm();
+});
+document.getElementById('volt-sl').addEventListener('input', e => {
+  voltage = +e.target.value;
+  document.getElementById('volt-val').textContent = voltage+' V';
+});
+document.getElementById('load-sl').addEventListener('input', e => {
+  load = +e.target.value;
+  document.getElementById('load-val').textContent = load+'%';
+  syncRpm();
+});
+document.getElementById('btn-start').addEventListener('click', () => {
+  running = true;
+  syncRpm();
+  document.getElementById('btn-start').classList.add('active');
+  document.getElementById('btn-stop').classList.remove('active');
+  document.getElementById('dot-run').className = 'dot green';
+  document.getElementById('stat-run').textContent = 'ON';
+});
+document.getElementById('btn-stop').addEventListener('click', () => {
+  running = false;
+  syncRpm();
+  document.getElementById('btn-start').classList.remove('active');
+  document.getElementById('btn-stop').classList.add('active');
+  document.getElementById('dot-run').className = 'dot red';
+  document.getElementById('stat-run').textContent = 'OFF';
+});
+
+// Mouse orbit
+let isDragging = false, lastMX = 0, lastMY = 0;
+canvas.addEventListener('mousedown', e => { isDragging=true; lastMX=e.clientX; lastMY=e.clientY; });
+window.addEventListener('mouseup', () => isDragging=false);
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  camAngle     += (e.clientX - lastMX)*0.005;
+  camElevation -= (e.clientY - lastMY)*0.003;
+  camElevation  = Math.max(0.1, Math.min(1.2, camElevation));
+  lastMX = e.clientX; lastMY = e.clientY;
+});
+
+// Touch
+canvas.addEventListener('touchstart', e=>{ isDragging=true; lastMX=e.touches[0].clientX; lastMY=e.touches[0].clientY; e.preventDefault(); },{passive:false});
+window.addEventListener('touchend', ()=>isDragging=false);
+window.addEventListener('touchmove', e=>{
+  if(!isDragging) return;
+  camAngle     += (e.touches[0].clientX-lastMX)*0.005;
+  camElevation -= (e.touches[0].clientY-lastMY)*0.003;
+  camElevation  = Math.max(0.1,Math.min(1.2,camElevation));
+  lastMX=e.touches[0].clientX; lastMY=e.touches[0].clientY;
+},{passive:false});
+
+// ═══════════════════════════════════════════
+//  Animation Loop
+// ═══════════════════════════════════════════
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t  = clock.getElapsedTime();
+
+  // Smooth RPM approach
+  const diff = targetRpm - rpm;
+  rpm += diff * (running ? 0.04 : 0.015);
+  if (rpm < 0.1) rpm = 0;
+
+  // Shaft rotation
+  const rps = rpm / 60;
+  shaftAngle += rps * Math.PI * 2 * dt;
+  shaftGroup.rotation.x = shaftAngle;
+
+  // Fan counter-rotation (NDE)
+  fanGroup.rotation.x = -shaftAngle * 0.5;
+
+  // Phase bars: 3-phase sinusoidal
+  phaseT += dt * freq * 0.03;
+  if (running && rpm > 10) {
+    const vAmp = (voltage/380) * (rpm/1500);
+    const r = Math.abs(Math.sin(phaseT * Math.PI * 2)             ) * vAmp * 100;
+    const s = Math.abs(Math.sin(phaseT * Math.PI * 2 + 2*Math.PI/3)) * vAmp * 100;
+    const tv= Math.abs(Math.sin(phaseT * Math.PI * 2 + 4*Math.PI/3)) * vAmp * 100;
+    document.getElementById('pb-r').style.height = r.toFixed(1)+'%';
+    document.getElementById('pb-s').style.height = s.toFixed(1)+'%';
+    document.getElementById('pb-t').style.height = tv.toFixed(1)+'%';
+  } else {
+    document.getElementById('pb-r').style.height = '0%';
+    document.getElementById('pb-s').style.height = '0%';
+    document.getElementById('pb-t').style.height = '0%';
+  }
+
+  // Gauge
+  const loadPct = running ? (rpm / (120*freq/4)) * load : 0;
+  updateGauge(Math.min(loadPct, 100));
+
+  // Seven segment
+  updateSegDisplay(segDigits, Math.round(rpm));
+
+  // Magnetic field particle flicker
+  fieldParticles.visible = running && rpm > 50;
+  if (fieldParticles.visible) {
+    fieldMat.opacity = 0.25 + 0.2*Math.sin(t*6);
+    fieldParticles.rotation.x = shaftAngle * 0.8;
+  }
+
+  // Camera slow auto-orbit when not dragging
+ 
+  camera.position.x = Math.cos(camAngle) * CAM_DIST * Math.cos(camElevation);
+  camera.position.y = Math.sin(camElevation) * CAM_DIST * 0.6;
+  camera.position.z = Math.sin(camAngle) * CAM_DIST * Math.cos(camElevation);
+  camera.lookAt(0, 0.3, 0);
+
+  // Subtle body vibration when running
+  if (running && rpm > 100) {
+    const vib = (rpm/1500) * 0.003;
+    motorGroup.position.y = Math.sin(t * rps * Math.PI * 4) * vib;
+  } else {
+    motorGroup.position.y = 0;
+  }
+
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>
