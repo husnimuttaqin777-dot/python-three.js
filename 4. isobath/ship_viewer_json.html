@@ -109,7 +109,7 @@
 
             scene.add(cube);
 
-            cube.position.x = 0;
+            cube.position.x = 5;
             cube.position.y = 0;
             cube.position.z = 0;
 
@@ -125,32 +125,6 @@
                 material_cube2
             );
             scene.add(cube2);
-
-
-            //kalo mau bikin group
-
-            var frame = new THREE.Group();
-            scene.add(frame);
-
-            var box1_group = new THREE.Mesh(
-                new THREE.BoxGeometry(2,2,2),
-                new THREE.MeshBasicMaterial({color:0xff0000})
-            );
-
-            var box2_group = new THREE.Mesh(
-                new THREE.BoxGeometry(2,2,2),
-                new THREE.MeshBasicMaterial({color:0x00ff00})
-            );
-
-            box1_group.position.set(0, 0, 0);
-            box2_group.position.set( 3, 0, 0);
-
-            frame.add(box1_group);
-            frame.add(box2_group);
-
-            frame.position.set(10, 10, 0);
-            frame.rotation.y = THREE.MathUtils.degToRad(45);
-            frame.rotation.z = THREE.MathUtils.degToRad(45);
 
 
             // Axes
