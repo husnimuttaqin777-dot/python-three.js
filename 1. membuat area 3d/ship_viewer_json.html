@@ -1,0 +1,75 @@
+<html>
+        <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <script src="jquery-2.1.4.js"></script>
+        <link rel="stylesheet" type="text/css" href="styles.css">
+        </head>
+        <body>
+       <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+       <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script>
+          var scene = new THREE.Scene();
+          scene.background = new THREE.Color(0x87CEEB);
+
+          var camera = new THREE.PerspectiveCamera(100,window.innerWidth/window.innerHeight);
+
+          var renderer = new THREE.WebGLRenderer({antialias: true});
+          renderer.setSize(window.innerWidth,window.innerHeight);
+          $('body').append(renderer.domElement);
+
+          var geometry = new THREE.BoxGeometry(3,3,3);
+          var material = new THREE.MeshBasicMaterial({color: 0xff0000});
+          var cube = new THREE.Mesh(geometry,material);
+          scene.add(cube);
+
+          cube.position.z = -5;
+          cube.rotation.x = 10;
+          cube.rotation.y = 5;
+
+          renderer.render(scene,camera);
+         
+          var animate = function(){
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+            renderer.render(scene,camera);
+            //cube.scale.x +=0.01; //untuk ganti ukuran
+            requestAnimationFrame(animate);
+          }
+
+          animate();
+
+
+          window.addEventListener('resize', function() {
+
+            camera.aspect =
+                window.innerWidth / window.innerHeight;
+
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(
+                window.innerWidth,
+                window.innerHeight
+            );
+
+        });
+          
+        </script>
+
+        <style>
+            html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            display: block;
+        }
+
+
+        </style>
+        </body>
+</html>
